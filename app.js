@@ -3,7 +3,9 @@ const express = require('express');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const md5 = require('md5');
+const bcrypt = require('bcrypt');
+
+const saltRounds = 10;
 
 const app = express();
 
@@ -49,18 +51,23 @@ app.get('/login', (req, res) => {
 
 app.post('/login', async(req, res) => {
     let username = req.body.username;
-    let password = md5(req.body.password);
+    let password = req.body.password;
 
     try {
         let result = await User.findOne({
             email: username
         });
 
-        if(result.password === password){
-            res.render('secrets');
-        }else{
-            res.send('Bad Credentials');
-        }
+        bcrypt.compare(password, result.password).
+
+        then(result => {
+            if (result) res.render('secrets');
+        })
+
+        .catch(error => {
+            res.send(error);
+        })
+
     } catch (error) {
         res.send(error);
     }
@@ -71,22 +78,29 @@ app.get('/register', (req, res) => {
     res.render('register');
 });
 
-app.post('/register', async(req, res) => {
-    let user = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
-    });
-
-    try {
-        let result = await user.save();
-
-        if(result){
+app.post('/register', (req, res) => {
+    bcrypt.hash(req.body.password, saltRounds)
+    
+    .then(hash => {
+        let user = new User({
+            email: req.body.username,
+            password: hash
+        });
+            
+        user.save()
+        .then(() =>{
             res.render('secrets');
-        }
-    } catch (error) {
-        res.send(error);
-    }
-});
+        })
+        .catch(error => {
+            res.render(error);
+        });
+
+    })
+
+    .catch(error => {
+        res.render(error);
+    });
+}); 
 
 app.listen(process.env.PORT, () => {
     console.log(`Server has started on port ${process.env.PORT}`);
