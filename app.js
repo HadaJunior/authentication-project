@@ -1,4 +1,4 @@
-//jshint esversion:6
+require('dotenv').config();
 const express = require('express');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
@@ -7,7 +7,7 @@ const encrypt = require('mongoose-encryption');
 
 const app = express();
 
-mongoose.connect('mongodb+srv://hadajunior5:W2Izcs89dsPIqwwq@mongodb-demo.xjcty6t.mongodb.net/userDB?retryWrites=true&w=majority')
+mongoose.connect(`mongodb+srv://${process.env.USERNAME_CONNECT}:${process.env.PASSWORD_CONNECT}@mongodb-demo.xjcty6t.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
 .then(() => {
     console.log('DB connected');
 })
@@ -35,10 +35,8 @@ let userSchema = new mongoose.Schema({
     }
 });
 
-let secret = 'ILoveABeautifulGirlFromTheBottomOfMyHeart.';
-
 userSchema.plugin(encrypt, {
-        secret: secret,
+        secret: process.env.SECRET,
         encryptedFields: ['password']
 });
 
@@ -60,7 +58,7 @@ app.post('/login', async(req, res) => {
 
     try {
         let result = await User.findOne({
-            email: req.body.username
+            email: username
         });
 
         if(result.password === password){
@@ -95,6 +93,6 @@ app.post('/register', async(req, res) => {
     }
 })
 
-app.listen(3000, () => {
-    console.log('Server has started on port 3000');
+app.listen(process.env.PORT, () => {
+    console.log(`Server has started on port ${process.env.PORT}`);
 })
