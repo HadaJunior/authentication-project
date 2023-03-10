@@ -3,6 +3,7 @@ const express = require('express');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const encrypt = require('mongoose-encryption');
 
 const app = express();
 
@@ -32,6 +33,13 @@ let userSchema = new mongoose.Schema({
         type: String,
         required: true
     }
+});
+
+let secret = 'ILoveABeautifulGirlFromTheBottomOfMyHeart.';
+
+userSchema.plugin(encrypt, {
+        secret: secret,
+        encryptedFields: ['password']
 });
 
 //create the user model
